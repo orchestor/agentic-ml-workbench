@@ -3,10 +3,11 @@ name = "py_orchestrator"
 version = "0.0.1"
 description = "Minimal Python orchestrator for agentic ML workbench"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = ["requests>=2.31.0"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["tests"]
