@@ -19,13 +19,41 @@ struct EchoRequest {
     message: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct MetricsRequest {
+    metric_name: String,
+    segment: String,
+    baseline_window_minutes: i32,
+    current_window_minutes: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MetricsPoint {
+    timestamp: String,
+    value: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MetricsSeriesResponse {
+    metric_name: String,
+    segment: String,
+    baseline_window_minutes: i32,
+    current_window_minutes: i32,
+    baseline_value: f64,
+    current_value: f64,
+    absolute_drop: f64,
+    relative_drop_percent: f64,
+    time_series: Vec<MetricsPoint>,
+}
+
 #[tokio::main]
 async fn main() {
     init_tracing();
 
     let app = Router::new()
         .route("/health", get(health_handler))
-        .route("/echo", post(echo_handler));
+        .route("/echo", post(echo_handler))
+        .route("/tools/metrics/debug_recs", post(metrics_debug_recs_handler));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     info!("gateway listening on {}", addr);
@@ -94,4 +122,43 @@ async fn health_handler() -> &'static str {
 
 async fn echo_handler(Json(payload): Json<EchoRequest>) -> Json<EchoRequest> {
     Json(payload)
+}
+
+async fn metrics_debug_recs_handler(
+    Json(req): Json<MetricsRequest>,
+) -> Json<MetricsSeriesResponse> {
+    // This is a stub. In a real system, the gateway would query metrics storage.
+    // For now we just construct a deterministic, fake response.
+
+    let baseline_value = 0.12;
+    let current_value = 0.09;
+    let absolute_drop = current_value - baseline_value;
+    let relative_drop_percent = (absolute_drop / baseline_value) * 100.0;
+
+    let response = MetricsSeriesResponse {
+        metric_name: req.metric_name,
+        segment: req.segment,
+        baseline_window_minutes: req.baseline_window_minutes,
+        current_window_minutes: req.current_window_minutes,
+        baseline_value,
+        current_value,
+        absolute_drop,
+        relative_drop_percent,
+        time_series: vec![
+            MetricsPoint {
+                timestamp: "2026-05-02T11:00:00Z".to_string(),
+                value: baseline_value,
+            },
+            MetricsPoint {
+                timestamp: "2026-05-02T11:15:00Z".to_string(),
+                value: 0.10,
+            },
+            MetricsPoint {
+                timestamp: "2026-05-02T11:30:00Z".to_string(),
+                value: current_value,
+            },
+        ],
+    };
+
+    Json(response)
 }
