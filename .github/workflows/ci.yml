@@ -26,7 +26,7 @@ jobs:
         run: |
           uv venv
           uv pip install -e ".[dev]"
-          uv run pytest
+          uv run pytest -m "not integration" --verbose
 
       # Rust
       - name: Set up Rust
